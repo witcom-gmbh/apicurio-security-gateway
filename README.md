@@ -105,7 +105,7 @@ It is easy to add an additional role for READ-Access, e.g
          - Method=GET
         filters:
          - KeyCloakBasicAuthToTokenFilter
-         - KeyCloakFilter=requiredRole,${KEYCLOAK_RESOURCE_ID}:${ROLE_WRITER:registry-read}
+         - KeyCloakFilter=requiredRole,${KEYCLOAK_RESOURCE_ID}:${ROLE_READER:registry-read}
 ```
 
 Or you can add more roles for the global-rules, metadata, whatever. You can protect single artifacts, by placing more specific routes above the default ones.  But as stated above - it might make more sense to use Keycloak-authorization-services for that.
