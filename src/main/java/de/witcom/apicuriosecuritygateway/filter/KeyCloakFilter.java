@@ -12,9 +12,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 
-import de.witcom.apicuriosecuritygateway.config.ApplicationProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.witcom.apicuriosecuritygateway.config.ApplicationProperties;
 import java.util.List;
+import java.net.URL;
+import java.security.PublicKey;
 import java.util.Arrays;
 import java.util.stream.Stream;
 import java.util.Map;
@@ -23,7 +26,12 @@ import java.util.stream.Collectors;
 
 
 import org.keycloak.TokenVerifier;
+import org.keycloak.TokenVerifier.TokenTypeCheck;
 import org.keycloak.common.VerificationException;
+import org.keycloak.jose.jwk.JSONWebKeySet;
+import org.keycloak.jose.jwk.JWK;
+import org.keycloak.jose.jwk.JWKParser;
+import org.keycloak.jose.jws.JWSHeader;
 import org.keycloak.representations.AccessToken;
 
 import reactor.core.publisher.Mono;
@@ -46,7 +54,6 @@ public class KeyCloakFilter extends AbstractNameValueGatewayFilterFactory {
 
             try {
                 String token = this.extractJWTToken(exchange.getRequest());
-                logger.debug(token);
                 
                 AccessToken accessToken = this.extractAccessToken(token);
                 
@@ -114,8 +121,16 @@ public class KeyCloakFilter extends AbstractNameValueGatewayFilterFactory {
 		
 		AccessToken token;
 		try {
-			token = TokenVerifier.create(tokenString, AccessToken.class).getToken();
-			return token;
+			@SuppressWarnings("unchecked")
+			TokenVerifier<AccessToken> verfifier = TokenVerifier
+					.create(tokenString, AccessToken.class)
+					.withChecks(org.keycloak.TokenVerifier.SUBJECT_EXISTS_CHECK,org.keycloak.TokenVerifier.IS_ACTIVE);
+			
+			return verfifier
+					.publicKey(this.retrievePublicKeyFromCertsEndpoint(verfifier.getHeader()))
+					.verify()
+					.getToken();
+			
 		} catch (VerificationException e) {
 			logger.debug(e.getMessage());
 			throw new KeyCloakFilterException("Unable to verify token " +e.getMessage());
@@ -146,6 +161,52 @@ public class KeyCloakFilter extends AbstractNameValueGatewayFilterFactory {
 
         return components[1].trim();
     }
+	
+	private PublicKey retrievePublicKeyFromCertsEndpoint(JWSHeader jwsHeader) {
+		
+		try {
+	        ObjectMapper om = new ObjectMapper();
+	        
+	        JSONWebKeySet certInfos = om.readValue(new URL(getRealmCertsUrl()).openStream(),JSONWebKeySet.class);
+	        
+	        JWK keyInfo = null;
+			for ( JWK key:certInfos.getKeys()){
+    	        String kid=key.getKeyId();
+    	        if (jwsHeader.getKeyId().equals(kid)) {
+    			  keyInfo  = key;
+    			  break;
+    			}
+			}
+			if (keyInfo == null) {
+				logger.error("Unable to get public key from certendpoint "+getRealmCertsUrl());
+				return null;
+			}
+			
+			return JWKParser.create(keyInfo).toPublicKey();
+	        
+		} catch (Exception e) {
+			logger.error("Unable to get public key from certendpoint "+getRealmCertsUrl()+ ":" + e.getMessage());
+		}
+		return null;
+	}
+	
+	private String getRealmUrl() {
+	    if (StringUtils.isEmpty(appProperties.getKeycloakConfig().getKeycloakServerUrl())){
+			logger.error("No keycloakServerUrl configured - filter won't work");
+			return "";
+		}
+		if (StringUtils.isEmpty(appProperties.getKeycloakConfig().getKeycloakRealmId())){
+			logger.error("No keycloakRelam configured - filter won't work");
+			return "";
+		}
+		//logger.debug(appProperties.getKeycloakConfig().getKeycloakServerUrl().trim() + "/realms/" + appProperties.getKeycloakConfig().getKeycloakRealmId().trim());
+		return appProperties.getKeycloakConfig().getKeycloakServerUrl().trim() + "/realms/" + appProperties.getKeycloakConfig().getKeycloakRealmId().trim();
+	}
+
+	private String getRealmCertsUrl() {
+		return getRealmUrl() + "/protocol/openid-connect/certs";
+	}
+	
 
 	
 	private Mono<Void> onError(ServerWebExchange exchange, String err)
