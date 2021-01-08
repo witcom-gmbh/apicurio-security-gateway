@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>de.witcom</groupId>
 	<artifactId>apicurio-security-gateway</artifactId>
-	<version>0.0.9</version>
+	<version>0.1.0</version>
 	<name>apicurio-security-gateway</name>
 	<description>Security gateway for apicurio service registry</description>
 

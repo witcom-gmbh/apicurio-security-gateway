@@ -44,7 +44,7 @@ public class KeyCloakBasicAuthToTokenFilter extends  AbstractGatewayFilterFactor
 	public GatewayFilter apply(Object config) {
 		
 		return (exchange, chain) -> {
-			log.info(exchange.getRequest().getURI().toString());
+
 			List<String> authHeaders = exchange.getRequest().getHeaders().getOrEmpty("Authorization");
 			//No Authorization-Header at all - let access fail
 			if (authHeaders == null || authHeaders.isEmpty()) {
