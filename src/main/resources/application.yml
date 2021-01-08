@@ -1,0 +1,46 @@
+server:
+  port: ${GATEWAY_PORT:8080} 
+  
+spring:
+  devtools:
+    add-properties: false
+  cloud:
+   gateway:
+    globalcors:
+      cors-configurations:
+        '[/**]':
+         allowedOrigins: "*"          
+    routes:
+      - id: apicurio-api-get
+        uri: ${APICURIO_URL:#{null}}
+        predicates:
+         - Path=/api/**
+         - Method=GET
+      - id: apicurio-api-write
+        uri: ${APICURIO_URL:#{null}}
+        predicates:
+         - Path=/api/**
+         - Method=POST,PUT
+        filters:
+          - KeyCloakBasicAuthToTokenFilter
+          - KeyCloakFilter=requiredRole,${KEYCLOAK_RESOURCE_ID}:${ROLE_WRITER:registry-writer}
+      - id: apicurio-api-delete
+        uri: ${APICURIO_URL:#{null}}
+        predicates:
+         - Path=/api/**
+         - Method=DELETE
+        filters:
+          - KeyCloakBasicAuthToTokenFilter
+          - KeyCloakFilter=requiredRole,${KEYCLOAK_RESOURCE_ID}:${ROLE_ADMIN:registry-admin}
+      - id: apicurio-catchall
+        uri: ${APICURIO_UI_URL:${APICURIO_URL}}
+        predicates:
+         - Path=/**
+
+application:
+  registry:
+    url: ${APICURIO_URL:#{null}}
+  keycloak-config:
+    keycloak-realm-id: ${KEYCLOAK_REALM_ID:#{null}}
+    keycloak-server-url: ${KEYCLOAK_SERVER_URL:#{null}}
+         

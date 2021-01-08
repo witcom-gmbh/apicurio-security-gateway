@@ -1,0 +1,20 @@
+# ===================================================================
+# Spring Cloud Consul Config bootstrap configuration for the "dev" profile
+# In prod profile, properties will be overwriten by the ones defined in bootstrap-prod.yml
+# ===================================================================
+
+spring:
+  application:
+    name: apicurio-security-gateway
+
+---
+spring:
+  profiles: dev
+
+---
+spring:
+  profiles: prod
+
+info:
+    project:
+        version: #project.version#
