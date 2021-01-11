@@ -35,18 +35,6 @@ spring:
         filters:
           - KeyCloakBasicAuthToTokenFilter
           - KeyCloakFilter=requiredRole,${KEYCLOAK_RESOURCE_ID}:${ROLE_ADMIN:registry-admin}
-#      - id: dummy-api
-#        uri: http://httpbin.org:80
-#        predicates:
-#         - Path=/get/**
-      - id: apicurio-catchall
-        uri: ${APICURIO_UI_URL:${APICURIO_URL}}
-        predicates:
-#         - Host={host} 
-         - Path=/**
-#        filters:
-#          - AddRequestHeader=X-Forwarded-Host, ${APICURIO_PUBLIC_HOSTNAME:${APICURIO_URL}}
-#          - AddRequestHeader=X-Forwarded-Proto, ${APICURIO_PUBLIC_PROTO:http}
           
 application:
   registry:

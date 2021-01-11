@@ -1,7 +1,7 @@
 # APICURIO Security Gateway
 
 ## Description
-It adds some basic authorization-check for API-requests to APICURIO. It is intended to run this service in front of APICURIO (e.g. as a sidecar-container in Kubernetes). It is used to authorize api-request made by API-Clients, e.g. kafka-producers and/or consumers. Protecting the UI is not the goal - if you want to to this, you can use https://oauth2-proxy.github.io/oauth2-proxy/docs/ and combine it with the Security-Gateway
+It adds some basic authorization-check for API-requests to APICURIO. It is intended to run this service in front of APICURIO (e.g. as a sidecar-container in Kubernetes). It is used to authorize api-request made by API-Clients, e.g. kafka-producers and/or consumers. Protecting the UI is not the goal - if you want to to this, you can use https://oauth2-proxy.github.io/oauth2-proxy/docs/ as an additional sidecar-container. 
 
 It uses Keycloak as identity-provider where all API-Clients have to be configured as confidential-clients in Keycloak.
 
@@ -25,14 +25,14 @@ Add a keycloak-client with the following specs
 * Client-Id: an id, eg. apicurio-registry
 * Protocol: openid-connect
 * Access-type: confidential
-* Disable all flows except **Service Accounts enabled**
+* Disable all flows except **Service Accounts enabled** (If you want to use that client with OAuth2-Proxy, Standard-Flow has to be active too)
 
 After adding the client, you have to add roles to the client. Out of the box 2 roles are supported. There default-names are
 
 * registry-writer
 * registry-admin
 
-You can use different names, but make sure to provide the when running the security-gateway (see Configuration)  
+You can use different names, but make sure to provide them when running the security-gateway (see Configuration)  
 
 ### Apicurio-Clients
 Every client that needs access has to be added as confidential-client to keycloak. 
@@ -57,8 +57,6 @@ The Gateway can be configured by setting env-variables.
 | `ROLE_WRITER` | Name of the writer-role, defaults to **registry-writer**  |
 | `ROLE_ADMIN` | Name of the admin-role, defaults to **registry-admin**  |
 | `GATEWAY_PORT` | Port the application is listening on, defaults to **8080**  |
-| `APICURIO_CATCHALL_URL` | URL to API-Curio. Defaults to `APICURIO_URL` . Useful if the UI is protected by an Oauth-proxy |
-
 
 ## Extended configuration
 Since this is a spring-boot application it can be configured with the application.yml file in src/main/resources. It uses Spring-Cloud-Gateway, so all configuration described here (https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#configuring-route-predicate-factories-and-gateway-filter-factories) is available.
@@ -88,10 +86,6 @@ This is the default configuration for the apicurio-security-gateway.
         filters:
           - KeyCloakBasicAuthToTokenFilter
           - KeyCloakFilter=requiredRole,${KEYCLOAK_RESOURCE_ID}:${ROLE_ADMIN:registry-admin}
-      - id: apicurio-catchall
-        uri: ${APICURIO_URL:#{null}}
-        predicates:
-         - Path=/**
 ```
 
 It is easy to add an additional role for READ-Access, e.g
