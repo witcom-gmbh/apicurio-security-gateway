@@ -24,13 +24,12 @@
 		<appender-ref ref="ConsoleSimple" />
 	</root>
 
-	<springProfile name="dev">
 		<logger name="de.witcom" level="debug"
 			additivity="false">
 			<appender-ref ref="ConsoleSimple" />
 		</logger>
 
-	</springProfile>
+
 
 
 
