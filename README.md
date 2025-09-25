@@ -1,5 +1,12 @@
 # APICURIO Security Gateway
 
+> ⚠️ **This repository is archived and no longer maintained.**
+>
+> - The code is provided as-is.
+> - No further updates, bug fixes, or support will be provided.
+
+---
+
 ## Description
 It adds some basic authorization-check for API-requests to APICURIO. It is intended to run this service in front of APICURIO (e.g. as a sidecar-container in Kubernetes). It is used to authorize api-request made by API-Clients, e.g. kafka-producers and/or consumers. Protecting the UI is not the goal - if you want to to this, you can use https://oauth2-proxy.github.io/oauth2-proxy/docs/ as an additional sidecar-container. 
 
